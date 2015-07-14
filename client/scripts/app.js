@@ -1,6 +1,7 @@
 var app = {};
 app.server = 'https://api.parse.com/1/classes/chatterbox';
 app.rooms = [];
+app.friends = {};
 
 app.init = function(){
   this.getAll();
@@ -43,13 +44,18 @@ app.addMessage = function(message){
 
 app.addRoom = function(room){
   $newRoom = $('<option></option>')
-    .attr('value', room)
+    .attr('value', room) // does it escape?
     .text(room);
   $('#roomSelect').append($newRoom);
   return;
 }
 
-app.addFriend = function() {
+app.addFriend = function(username) {
+  if (!(username in app.friends)) {
+    app.friends[username] = true;
+    console.log(this.friends);
+
+  }
   return;
 }
 
@@ -60,12 +66,17 @@ app.handleSubmit = function() {
 //EVENT HANDLERS
 $(document).ready(function(){
   app.init();
+
   $("#submit").on("click", function() {
     var newData = {};
     newData.username = window.location.search.slice(10); // .split("=")[1]
     newData.text = $("#message").val();
     newData.roomname = $("#room").val();
     app.send(newData);
+  });
+
+  $('#chats').on('click', '.username', function() {
+    app.addFriend($(this).text());
   });
 });
 
@@ -82,8 +93,17 @@ app.getAll = function(){
         app.rooms.push(messages[i].roomname);
         text = messages[i].text;
         username = messages[i].username;
+        $user = $('<button></button>');
+        $user.attr({
+          'name': username,
+          'class': 'username'
+          }); // does it escape?
+        $user.text(username);
+        $content = $('<p></p>');
+        $content.text(text);
         $newMessage = $('<div></div>');
-        $newMessage.text(username + ": " + text);
+        $newMessage.append($user);
+        $newMessage.append($content);
         $("#chats").append($newMessage);
       }
     },
