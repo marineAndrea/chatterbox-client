@@ -1,24 +1,31 @@
 var app = {};
-
+window.initialized = false;
 app.server = 'https://api.parse.com/1/classes/chatterbox';
 
-app.init = function() {
+app.init = function(room) {
+  // window.roomname;
+  var text;
+  var username;
+  var $newMessage;
+  room = room || "";
+  alert("inside init" + room);
+  // debugger;
+
   $.ajax({
     url: this.server,
     type: 'GET',
     dataType: 'JSON',
+
     success: function(data) {
       var messages = data.results;
-      console.log(messages);
-      var text;
-      var username;
-      var $newMessage;
+      console.log(messages); //[{}, {} ...]
+      // go through the messages in the appropriate room and display the ones that correspond
       for (var i = 0; i < messages.length; i++) {
-        if (messages[i].text) {
+        if (messages[i].roomname === room) {
           text = messages[i].text;
           username = messages[i].username;
           $newMessage = $('<div></div>'); // why is this working?
-          $newMessage.text(username + ": " + text);
+          $newMessage.text(username + ": " + text + ": " + room);
           $(".chat").append($newMessage);
         }
       }
@@ -36,7 +43,6 @@ app.send = function(newData) {
     type: 'POST',
     data: JSON.stringify(newData),
     contentType: 'application/json',
-    // dataType: 'JSON',
     success: function (data) {
       alert('chatterbox: Message sent');
     },
@@ -45,26 +51,32 @@ app.send = function(newData) {
       alert('chatterbox: Failed to send message');
     }
   });
+  // refresh each time message is sent
+  alert(newData.roomname);
+  this.fetch(newData.roomname);
   return;
 };
 
-app.fetch = function() { 
+app.fetch = function(room) { 
   $('.chat').empty();
-  this.init();
+  this.init(room);
   return;
 };
 
-app.init();
 $(document).ready(function(){
   $("#submit").on("click", function() {
     var newData = {};
     newData.username = window.location.search.slice(10); // .split("=")[1]
     newData.text = $("#message").val();
+    newData.roomname = $("#room").val();
     app.send(newData);
   });
+  if (!window.initialized) {
+    alert("called init at bottom" + window.initialized);
+    window.initialized = true;
+    app.init();
+  }
 });
-
-
 
 
 
