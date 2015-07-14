@@ -1,24 +1,28 @@
 // YOUR CODE HERE:
 
-// $.get('https://api.parse.com/1/classes/chatterbox');
-
 $(document).ready(function(){
-  var apiURL = 'https://api.parse.com/1/classes/chatterbox';
-  var messages;
-  var text;
-  var displayMessages = function() {
-    $('.chat').empty();
+  var app = {};
+
+  app.server = 'https://api.parse.com/1/classes/chatterbox';
+
+  app.init = function() {
     $.ajax({
-      url: apiURL,
+      url: this.server,
       type: 'GET',
       dataType: 'JSON',
       success: function(data) {
-        messages = data.results;
+        var messages = data.results;
         console.log(messages);
+        var text;
+        var username;
+        var $newMessage;
         for (var i = 0; i < messages.length; i++) {
           if (messages[i].text) {
             text = messages[i].text;
-            $(".chat").append("<p>" + text + "</p>");
+            username = messages[i].username;
+            $newMessage = $('<div></div>'); // why is this working?
+            $newMessage.text(username + ": " + text);
+            $(".chat").append($newMessage);
           }
         }
       },
@@ -27,11 +31,44 @@ $(document).ready(function(){
       }
     });
   };
-  displayMessages();
-  // debugger;
-  $('.refresh').on('click', function(event){
-    displayMessages();
+
+
+  app.send = function(newData) {
+    $.ajax({
+      url: this.server,
+      type: 'POST',
+      data: JSON.stringify(newData),
+      contentType: 'application/json',
+      // dataType: 'JSON',
+      success: function (data) {
+        alert('chatterbox: Message sent');
+      },
+      error: function (data) {
+        // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
+        alert('chatterbox: Failed to send message');
+      }
+    });
+    return;
+  };
+
+  app.fetch = function() { 
+    $('.chat').empty();
+    this.init();
+    return;
+  };
+
+  app.init();
+
+  $("#submit").on("click", function() {
+    var newData = {};
+    newData.username = window.location.search.slice(10);
+    newData.text = $("#message").val();
+    app.send(newData);
   });
-
-
 });
+
+
+
+
+
+
