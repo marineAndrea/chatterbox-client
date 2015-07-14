@@ -59,7 +59,8 @@ app.addFriend = function(username) {
   return;
 }
 
-app.handleSubmit = function() {
+app.handleSubmit = function(data) {
+    app.send(data);
   return;
 }
 
@@ -67,12 +68,12 @@ app.handleSubmit = function() {
 $(document).ready(function(){
   app.init();
 
-  $("#submit").on("click", function() {
+  $("#send").on("click", function() {
     var newData = {};
     newData.username = window.location.search.slice(10); // .split("=")[1]
     newData.text = $("#message").val();
     newData.roomname = $("#room").val();
-    app.send(newData);
+    app.handleSubmit(newData);
   });
 
   $('#chats').on('click', '.username', function() {
