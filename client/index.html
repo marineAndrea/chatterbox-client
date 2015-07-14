@@ -19,14 +19,15 @@
       <form method="POST">
         <label for="room">Room Name</label>
         <input type="text" name="room" id="room">
+        <select id="roomSelect" name="Room">
+        </select>
         <label for="message">Message</label>
         <textarea name="message" id="message"></textarea>
-        <button name = "submit" type="button" id="submit">Send Message</button>
+        <button name="submit" type="button" id="submit">Send Message</button>
       </form>
       <!-- Your HTML goes here! -->
         <button class="refresh">Show new messages</button>
-      <div class="chat">
-      </div>
+      <div id="chats"></div>
     </div>
   </body>
 </html>
