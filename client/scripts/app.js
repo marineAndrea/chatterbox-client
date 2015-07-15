@@ -1,10 +1,28 @@
 var app = {};
 app.server = 'https://api.parse.com/1/classes/chatterbox';
-app.rooms = [];
+app.rooms = {};
 app.friends = {};
 
 app.init = function(){
-  this.getAll();
+  $.ajax({
+    url: this.server,
+    type: 'GET',
+    dataType: 'JSON',
+    success: function(data) {
+      var messages = data.results;
+      console.log(messages);
+      for (var i = 0; i < messages.length; i++) {
+        if (!(messages[i].roomname in app.rooms)) {
+          app.rooms[messages[i].roomname] = true;
+          app.addRoom(messages[i].roomname);
+        }
+        app.addMessage(messages[i]);
+      }
+    },
+    error: function(data) {
+      console.error('Failed to get message');
+    }
+  });
 }
 
 app.send = function(newData){
@@ -14,6 +32,7 @@ app.send = function(newData){
     data: JSON.stringify(newData),
     contentType: 'application/json',
     success: function (data) {
+      app.fetch();
       alert('chatterbox: Message sent');
     },
     error: function (data) {
@@ -24,7 +43,8 @@ app.send = function(newData){
 }
 
 app.fetch = function(){
-  this.getAll();
+  app.clearMessages();
+  app.init();
   return;
 }
 
@@ -34,10 +54,22 @@ app.clearMessages = function(){
 }
 
 app.addMessage = function(message){
-  text = message.text;
-  username = message.username;
+  var text = message.text;
+  var username = message.username;
+  $user = $('<button></button>');
+  $user.attr({
+    'name': username,
+    'class': 'username'
+    }); // does it escape?
+  $user.text(username);
+  $content = $('<p></p>');
+  $content.text(text); // escaping content
   $newMessage = $('<div></div>');
-  $newMessage.text(username + ": " + text);
+  if (username in app.friends) {
+    $newMessage.addClass('friend');
+  }
+  $newMessage.append($user);
+  $newMessage.append($content);
   $("#chats").append($newMessage);
   return;
 }
@@ -56,6 +88,7 @@ app.addFriend = function(username) {
     console.log(this.friends);
 
   }
+  app.fetch();
   return;
 }
 
@@ -64,10 +97,10 @@ app.handleSubmit = function(data) {
   return;
 }
 
-//EVENT HANDLERS
+// Document.init
 $(document).ready(function(){
   app.init();
-
+  // event send handler
   $("#send").on("click", function() {
     var newData = {};
     newData.username = window.location.search.slice(10); // .split("=")[1]
@@ -75,14 +108,19 @@ $(document).ready(function(){
     newData.roomname = $("#room").val();
     app.handleSubmit(newData);
   });
-
+  //event add friend
   $('#chats').on('click', '.username', function() {
     app.addFriend($(this).text());
   });
+  //event handler select username
+  $('#roomSelect').on('change', function() {
+    var newRoom = $(this).val();
+    console.log("roomSelect value " + newRoom);
+    app.getRoomMessages(newRoom);
+  });
 });
 
-//METHODS
-app.getAll = function(){
+app.getRoomMessages = function(room) {
   $.ajax({
     url: this.server,
     type: 'GET',
@@ -90,46 +128,10 @@ app.getAll = function(){
     success: function(data) {
       var messages = data.results;
       console.log(messages);
-      for (var i = 0; i < messages.length; i++) {
-        app.rooms.push(messages[i].roomname);
-        text = messages[i].text;
-        username = messages[i].username;
-        $user = $('<button></button>');
-        $user.attr({
-          'name': username,
-          'class': 'username'
-          }); // does it escape?
-        $user.text(username);
-        $content = $('<p></p>');
-        $content.text(text);
-        $newMessage = $('<div></div>');
-        $newMessage.append($user);
-        $newMessage.append($content);
-        $("#chats").append($newMessage);
-      }
-    },
-    error: function(data) {
-      console.error('Failed to get message');
-    }
-  });
-}
-
-/*app.getRoomMessages = function(room) {
-  $.ajax({
-    url: this.server,
-    type: 'GET',
-    dataType: 'JSON',
-    room = room || "";
-    success: function(data) {
-      var messages = data.results;
-      console.log(messages);
+      app.clearMessages();
       for (var i = 0; i < messages.length; i++) {
         if (messages[i].roomname === room) {
-          text = messages[i].text;
-          username = messages[i].username;
-          $newMessage = $('<div></div>');
-          $newMessage.text(username + ": " + text + ": " + room);
-          $("#chats").append($newMessage);
+        app.addMessage(messages[i]);
         }
       }
     },
@@ -137,5 +139,4 @@ app.getAll = function(){
       console.error('Failed to get message');
     }
   });
-  return;
-}*/
+};
